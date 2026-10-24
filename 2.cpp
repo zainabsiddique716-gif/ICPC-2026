@@ -1,16 +1,16 @@
 
 #include <iostream>
 #include <vector>
-#include <string>
+#include <algorithm>
 // Initialize variables
 using namespace std;
 
-const long long NEG_INF = -(1LL << 60);
+const long long INF = (1LL << 60);
 
 int N, M;
 vector<long long> models;
-vector<string> engineer, action;
-vector<long long> memo[21][1 << 20];
+vector<char> engineer, action;
+long long memo[21][1 << 20];
 bool seen[21][1 << 20];
 
 long long solve(int turn, int mask)
@@ -22,52 +22,55 @@ long long solve(int turn, int mask)
 
     if (seen[turn][mask])
     {
-        return memo[turn][mask][0];
+        return memo[turn][mask];
     }
 
     seen[turn][mask] = true;
 
     long long best;
 
-    if (action[turn] == "pick")
+    if (engineer[turn] == 'A')
     {
-        best = NEG_INF;
-
-        for (int i = 0; i < N; i++)
-        {
-            if (!(mask & (1 << i)))
-            {
-                long long score = models[i];
-
-                if (engineer[turn] == "A")
-                {
-                    best = max(best, score + solve(turn + 1, mask | (1 << i)));
-                }
-                else
-                {
-                    best = max(best, -score + solve(turn + 1, mask | (1 << i)));
-                }
-            }
-        }
+        best = -INF;
     }
     else
     {
-        best = NEG_INF;
+        best = INF;
+    }
 
-        for (int i = 0; i < N; i++)
+    for (int i = 0; i < N; i++)
+    {
+        if (mask & (1 << i))
         {
-            if (!(mask & (1 << i)))
+            continue;
+        }
+
+        int newMask = mask | (1 << i);
+        long long value = solve(turn + 1, newMask);
+
+        if (action[turn] == 'p')
+        {
+            if (engineer[turn] == 'A')
             {
-                best = max(best, solve(turn + 1, mask | (1 << i)));
+                value += models[i];
+            }
+            else
+            {
+                value -= models[i];
             }
         }
 
-        best = max(best, solve(turn + 1, mask));
+        if (engineer[turn] == 'A')
+        {
+            best = max(best, value);
+        }
+        else
+        {
+            best = min(best, value);
+        }
     }
 
-    memo[turn][mask].resize(1);
-    memo[turn][mask][0] = best;
-
+    memo[turn][mask] = best;
     return best;
 }
 
@@ -93,11 +96,15 @@ void read_my_input()
 
     for (int i = 0; i < M; i++)
     {
-        cin >> engineer[i] >> action[i];
+        string x, y;
+        cin >> x >> y;
+
+        engineer[i] = x[0];
+        action[i] = (y == "pick" ? 'p' : 'b');
     }
 
-    // The intended game requires knowing the precise automatic-pick rule.
-    // Without that rule, the strategy cannot be modeled reliably.
+    sort(models.begin(), models.end(), greater<long long>());
+
     long long result = solve(0, 0);
 
     if (result > 0)
