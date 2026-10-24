@@ -2,6 +2,7 @@
 #include <vector>
 
 using namespace std;
+// Initialize variables
 
 int main() {
     ios_base::sync_with_stdio(false);
@@ -42,4 +43,7 @@ int main() {
     }
 
     return 0;
+}
+
+void read_my_input() {
 }
