@@ -2,106 +2,235 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
-// Initialize variables
 
 using namespace std;
 
-const long long INF = 1e18;
-
 struct Edge {
-    int to;
-    long long cost;
+    int u, v, t;
+    long long c;
 };
-
 void optimize_memory() {
 }
-
-void read_my_input() {
-}
-
 int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, m, s;
+    cin >> n >> m >> s;
+    vector<int> S(s);
+    vector<bool> isS(n + 1, false);
+    for (int i = 0; i < s; i++) {
+        cin >> S[i];
+        isS[S[i]] = true;
+    }
 
-    int totalNodes, totalEdges, totalTerminals;
-    if (!(cin >> totalNodes >> totalEdges >> totalTerminals)) {
+    vector<Edge> edges(m);
+
+    for (int i = 0; i < m; i++) {
+        cin >> edges[i].u >> edges[i].v
+            >> edges[i].t >> edges[i].c;
+
+        if (edges[i].t == 1) {
+            edges[i].c = 0;
+        }
+    }
+    if (s <= 1) {
+        cout << 0 << '\n';
+        optimize_memory();
+        return 0;
+    }
+    vector<vector<pair<int, int>>> adj(n + 1);
+    for (int i = 0; i < m; i++) {
+        adj[edges[i].u].push_back({edges[i].v, i});
+        adj[edges[i].v].push_back({edges[i].u, i});
+    }
+
+    vector<bool> visited(n + 1, false);
+    queue<int> q;
+
+    q.push(S[0]);
+    visited[S[0]] = true;
+    int reached = 0;
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+
+        if (isS[u]) {
+            reached++;
+        }
+
+        for (auto e : adj[u]) {
+            int v = e.first;
+
+            if (!visited[v]) {
+                visited[v] = true;
+                q.push(v);
+            }
+        }
+    }
+
+    if (reached != s) {
+        cout << -1 << '\n';
+        optimize_memory();
         return 0;
     }
 
-    vector<int> terminalNodes(totalTerminals);
-    for (int i = 0; i < totalTerminals; ++i) {
-        cin >> terminalNodes[i];
-    }
+    for (int removed = 0; removed < m; removed++) {
+        vector<bool> seen(n + 1, false);
+        queue<int> bfs;
+        bfs.push(S[0]);
+        seen[S[0]] = true;
+        int count = 0;
 
-    vector<vector<Edge>> adjacencyList(totalNodes + 1);
-    for (int i = 0; i < totalEdges; ++i) {
-        int u, v, type;
-        long long cost;
-        cin >> u >> v >> type >> cost;
-        if (type == 1) {
-            cost = 0;
-        }
-        adjacencyList[u].push_back({v, cost});
-        adjacencyList[v].push_back({u, cost});
-    }
+        while (!bfs.empty()) {
+            int u = bfs.front();
+            bfs.pop();
+            if (isS[u]) {
+                count++;
+            }
 
-    int terminalMaskCount = 1 << totalTerminals;
-    vector<vector<long long>> minCostDP(terminalMaskCount, vector<long long>(totalNodes + 1, INF));
+            for (auto e : adj[u]) {
+                int v = e.first;
+                int id = e.second;
 
-    for (int i = 0; i < totalTerminals; ++i) {
-        minCostDP[1 << i][terminalNodes[i]] = 0;
-    }
-
-    for (int mask = 1; mask < terminalMaskCount; ++mask) {
-        for (int submask = (mask - 1) & mask; submask > 0; submask = (submask - 1) & mask) {
-            int remainingSubmask = mask ^ submask;
-            if (submask < remainingSubmask) continue;
-
-            for (int u = 1; u <= totalNodes; ++u) {
-                if (minCostDP[submask][u] < INF && minCostDP[remainingSubmask][u] < INF) {
-                    minCostDP[mask][u] = min(minCostDP[mask][u], minCostDP[submask][u] + minCostDP[remainingSubmask][u]);
+                if (id != removed && !seen[v]) {
+                    seen[v] = true;
+                    bfs.push(v);
                 }
             }
         }
 
-        priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> minHeap;
-        for (int u = 1; u <= totalNodes; ++u) {
-            if (minCostDP[mask][u] < INF) {
-                minHeap.push({minCostDP[mask][u], u});
-            }
+        if (count != s) {
+            cout << -1 << '\n';
+            optimize_memory();
+            return 0;
+        }
+    }
+
+    long long totalCost = 0;
+
+    for (const auto &e : edges) {
+        totalCost += e.c;
+    }
+    cout << totalCost << '\n';
+
+    optimize_memory();
+    return 0;
+}#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+struct Edge {
+    int u, v, t;
+    long long c;
+};
+void optimize_memory() {
+}
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, m, s;
+    cin >> n >> m >> s;
+    vector<int> S(s);
+    vector<bool> isS(n + 1, false);
+    for (int i = 0; i < s; i++) {
+        cin >> S[i];
+        isS[S[i]] = true;
+    }
+
+    vector<Edge> edges(m);
+
+    for (int i = 0; i < m; i++) {
+        cin >> edges[i].u >> edges[i].v
+            >> edges[i].t >> edges[i].c;
+
+        if (edges[i].t == 1) {
+            edges[i].c = 0;
+        }
+    }
+    if (s <= 1) {
+        cout << 0 << '\n';
+        optimize_memory();
+        return 0;
+    }
+    vector<vector<pair<int, int>>> adj(n + 1);
+    for (int i = 0; i < m; i++) {
+        adj[edges[i].u].push_back({edges[i].v, i});
+        adj[edges[i].v].push_back({edges[i].u, i});
+    }
+
+    vector<bool> visited(n + 1, false);
+    queue<int> q;
+
+    q.push(S[0]);
+    visited[S[0]] = true;
+    int reached = 0;
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+
+        if (isS[u]) {
+            reached++;
         }
 
-        while (!minHeap.empty()) {
-            auto [currentCost, currentNode] = minHeap.top();
-            minHeap.pop();
+        for (auto e : adj[u]) {
+            int v = e.first;
 
-            if (currentCost > minCostDP[mask][currentNode]) {
-                continue;
+            if (!visited[v]) {
+                visited[v] = true;
+                q.push(v);
+            }
+        }
+    }
+
+    if (reached != s) {
+        cout << -1 << '\n';
+        optimize_memory();
+        return 0;
+    }
+
+    for (int removed = 0; removed < m; removed++) {
+        vector<bool> seen(n + 1, false);
+        queue<int> bfs;
+        bfs.push(S[0]);
+        seen[S[0]] = true;
+        int count = 0;
+
+        while (!bfs.empty()) {
+            int u = bfs.front();
+            bfs.pop();
+            if (isS[u]) {
+                count++;
             }
 
-            for (const auto& edge : adjacencyList[currentNode]) {
-                int nextNode = edge.to;
-                long long newCost = currentCost + edge.cost;
+            for (auto e : adj[u]) {
+                int v = e.first;
+                int id = e.second;
 
-                if (newCost < minCostDP[mask][nextNode]) {
-                    minCostDP[mask][nextNode] = newCost;
-                    minHeap.push({newCost, nextNode});
+                if (id != removed && !seen[v]) {
+                    seen[v] = true;
+                    bfs.push(v);
                 }
             }
         }
+
+        if (count != s) {
+            cout << -1 << '\n';
+            optimize_memory();
+            return 0;
+        }
     }
 
-    long long finalAnswer = INF;
-    int fullMask = terminalMaskCount - 1;
-    for (int u = 1; u <= totalNodes; ++u) {
-        finalAnswer = min(finalAnswer, minCostDP[fullMask][u]);
-    }
+    long long totalCost = 0;
 
-    if (finalAnswer >= INF / 2) {
-        cout << -1 << "\n";
-    } else {
-        cout << finalAnswer << "\n";
+    for (const auto &e : edges) {
+        totalCost += e.c;
     }
+    cout << totalCost << '\n';
 
     optimize_memory();
     return 0;
