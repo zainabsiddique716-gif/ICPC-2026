@@ -1,7 +1,11 @@
 #include <iostream>
+#include <vector>
 #include <algorithm>
+#include <bitset>
 
 using namespace std;
+
+const int MAX_NODES = 505;
 
 struct Event {
     int fromNode;
@@ -33,14 +37,14 @@ int main() {
         return 0;
     }
 
-    Event* eventList = new Event[totalEvents];
+    vector<Event> eventList(totalEvents);
 
     cout << "Enter each event (fromNode toNode timestamp):" << endl;
     for (int i = 0; i < totalEvents; i++) {
         cin >> eventList[i].fromNode >> eventList[i].toNode >> eventList[i].timestamp;
     }
 
-    sort(eventList, eventList + totalEvents, compareEvents);
+    sort(eventList.begin(), eventList.end(), compareEvents);
 
     long long countType1 = 0;
     long long countType2 = 0;
@@ -66,29 +70,22 @@ int main() {
             int targetV3 = -1;
             int patternType = 0;
 
-            // Pattern 1: A -> B, B -> C, C -> A
             if (nodeU2 == nodeB && nodeV2 != nodeA && nodeV2 != nodeB) {
                 targetU3 = nodeV2;
                 targetV3 = nodeA;
                 patternType = 1;
-            }
-            // Pattern 2: A -> B, A -> C, B -> C
-            else if (nodeU2 == nodeA && nodeV2 != nodeA && nodeV2 != nodeB) {
+            } else if (nodeU2 == nodeA && nodeV2 != nodeA && nodeV2 != nodeB) {
                 targetU3 = nodeB;
                 targetV3 = nodeV2;
                 patternType = 2;
-            }
-            // Pattern 3: A -> B, C -> B, B -> A
-            else if (nodeV2 == nodeB && nodeU2 != nodeA && nodeU2 != nodeB) {
+            } else if (nodeV2 == nodeB && nodeU2 != nodeA && nodeU2 != nodeB) {
                 targetU3 = nodeB;
                 targetV3 = nodeA;
                 patternType = 3;
             }
 
-            // Agar koi pattern match nahi hota toh teesra loop chalane ki zaroorat hi nahi
             if (patternType == 0) continue;
 
-            // Sirf exact required edge dhoondo
             for (int k = j + 1; k < totalEvents; k++) {
                 long long time3 = eventList[k].timestamp;
 
@@ -105,8 +102,6 @@ int main() {
     }
 
     cout << "Result: " << countType1 << " " << countType2 << " " << countType3 << endl;
-
-    delete[] eventList;
 
     return 0;
 }
