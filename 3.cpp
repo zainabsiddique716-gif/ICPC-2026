@@ -7,22 +7,24 @@ struct Event {
     int fromNode;
     int toNode;
     long long timestamp;
-    int originalIndex;
 };
 
-bool compareEvents(const Event& firstEvent, const Event& secondEvent) {
-    if (firstEvent.timestamp != secondEvent.timestamp) {
-        return firstEvent.timestamp < secondEvent.timestamp;
+bool compareEvents(const Event& eventA, const Event& eventB) {
+    if (eventA.timestamp != eventB.timestamp) {
+        return eventA.timestamp < eventB.timestamp;
     }
-    return firstEvent.originalIndex < secondEvent.originalIndex;
+    if (eventA.fromNode != eventB.fromNode) {
+        return eventA.fromNode < eventB.fromNode;
+    }
+    return eventA.toNode < eventB.toNode;
 }
 
 int main() {
     int totalNodes, totalEvents;
-    long long maxTimeDiff;
+    long long maxTimeDifference;
 
     cout << "Enter total nodes, total events, and max time difference: ";
-    if (!(cin >> totalNodes >> totalEvents >> maxTimeDiff)) {
+    if (!(cin >> totalNodes >> totalEvents >> maxTimeDifference)) {
         return 0;
     }
 
@@ -36,7 +38,6 @@ int main() {
     cout << "Enter each event (fromNode toNode timestamp):" << endl;
     for (int i = 0; i < totalEvents; i++) {
         cin >> eventList[i].fromNode >> eventList[i].toNode >> eventList[i].timestamp;
-        eventList[i].originalIndex = i;
     }
 
     sort(eventList, eventList + totalEvents, compareEvents);
@@ -53,41 +54,51 @@ int main() {
         if (nodeA == nodeB) continue;
 
         for (int j = i + 1; j < totalEvents; j++) {
-            if (eventList[j].timestamp - time1 > maxTimeDiff) {
-                break;
+            long long time2 = eventList[j].timestamp;
+
+            if (time2 - time1 > maxTimeDifference) break;
+            if (time2 == time1) continue;
+
+            int nodeU2 = eventList[j].fromNode;
+            int nodeV2 = eventList[j].toNode;
+
+            int targetU3 = -1;
+            int targetV3 = -1;
+            int patternType = 0;
+
+            // Pattern 1: A -> B, B -> C, C -> A
+            if (nodeU2 == nodeB && nodeV2 != nodeA && nodeV2 != nodeB) {
+                targetU3 = nodeV2;
+                targetV3 = nodeA;
+                patternType = 1;
+            }
+            // Pattern 2: A -> B, A -> C, B -> C
+            else if (nodeU2 == nodeA && nodeV2 != nodeA && nodeV2 != nodeB) {
+                targetU3 = nodeB;
+                targetV3 = nodeV2;
+                patternType = 2;
+            }
+            // Pattern 3: A -> B, C -> B, B -> A
+            else if (nodeV2 == nodeB && nodeU2 != nodeA && nodeU2 != nodeB) {
+                targetU3 = nodeB;
+                targetV3 = nodeA;
+                patternType = 3;
             }
 
-            int nodeC = eventList[j].fromNode;
-            int nodeD = eventList[j].toNode;
+            // Agar koi pattern match nahi hota toh teesra loop chalane ki zaroorat hi nahi
+            if (patternType == 0) continue;
 
-            if (nodeC == nodeD) continue;
-            if (nodeA == nodeC && nodeB == nodeD) continue;
-
+            // Sirf exact required edge dhoondo
             for (int k = j + 1; k < totalEvents; k++) {
-                if (eventList[k].timestamp - time1 > maxTimeDiff) {
-                    break;
-                }
+                long long time3 = eventList[k].timestamp;
 
-                int nodeE = eventList[k].fromNode;
-                int nodeF = eventList[k].toNode;
+                if (time3 - time1 > maxTimeDifference) break;
+                if (time3 == time2) continue;
 
-                if (nodeE == nodeF) continue;
-                if (nodeA == nodeE && nodeB == nodeF) continue;
-                if (nodeC == nodeE && nodeD == nodeF) continue;
-
-                if (nodeB == nodeC && nodeD == nodeE && nodeF == nodeA &&
-                    nodeA != nodeB && nodeA != nodeD && nodeB != nodeD) {
-                    countType1++;
-                }
-
-                if (nodeA == nodeC && nodeB == nodeE && nodeD == nodeF &&
-                    nodeA != nodeB && nodeA != nodeD && nodeB != nodeD) {
-                    countType2++;
-                }
-
-                if (nodeA == nodeE && nodeB == nodeD && nodeC == nodeF &&
-                    nodeA != nodeB && nodeA != nodeC && nodeB != nodeC) {
-                    countType3++;
+                if (eventList[k].fromNode == targetU3 && eventList[k].toNode == targetV3) {
+                    if (patternType == 1) countType1++;
+                    else if (patternType == 2) countType2++;
+                    else if (patternType == 3) countType3++;
                 }
             }
         }
