@@ -1,90 +1,87 @@
-
 #include <iostream>
 #include <vector>
 #include <algorithm>
+// Initialize variables
 
 using namespace std;
 
-// Initialize variables
+const int MOD = 1000000007;
+const int OFFSET = 2005;
+const int MAX_DIM = 4015;
 
-const long long MOD = 1000000007LL;
+int gridPaths[MAX_DIM][MAX_DIM];
 
 long long modPower(long long base, long long exponent) {
     long long result = 1;
-
+    base %= MOD;
     while (exponent > 0) {
-        if (exponent & 1) {
-            result = result * base % MOD;
-        }
-
-        base = base * base % MOD;
+        if (exponent & 1) result = (result * base) % MOD;
+        base = (base * base) % MOD;
         exponent >>= 1;
     }
-
     return result;
 }
 
-void optimize_memory() {
-}
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
 
-void read_my_input() {
     int totalBoxes;
-    cin >> totalBoxes;
+    if (!(cin >> totalBoxes)) return 0;
 
-    vector<int> countA(totalBoxes);
-    vector<int> countB(totalBoxes);
-
-    for (int i = 0; i < totalBoxes; i++) {
-        cin >> countA[i] >> countB[i];
+    vector<pair<int, int>> boxes(totalBoxes);
+    for (int i = 0; i < totalBoxes; ++i) {
+        cin >> boxes[i].first >> boxes[i].second;
     }
 
-    int maxTotal = 0;
-
-    for (int i = 0; i < totalBoxes; i++) {
-        maxTotal = max(maxTotal, countA[i] + countB[i]);
+    for (int i = 0; i < totalBoxes; ++i) {
+        gridPaths[OFFSET - boxes[i].first][OFFSET - boxes[i].second]++;
     }
 
-    vector<long long> factorial(2 * maxTotal + 1, 1);
-    vector<long long> inverseFactorial(2 * maxTotal + 1, 1);
-
-    for (int i = 1; i <= 2 * maxTotal; i++) {
-        factorial[i] = factorial[i - 1] * i % MOD;
-    }
-
-    inverseFactorial[2 * maxTotal] =
-        modPower(factorial[2 * maxTotal], MOD - 2);
-
-    for (int i = 2 * maxTotal; i >= 1; i--) {
-        inverseFactorial[i - 1] =
-            inverseFactorial[i] * i % MOD;
-    }
-
-    long long answer = 0;
-
-    for (int i = 0; i < totalBoxes; i++) {
-        for (int j = i + 1; j < totalBoxes; j++) {
-            int totalA = countA[i] + countA[j];
-            int totalB = countB[i] + countB[j];
-            int totalItems = totalA + totalB;
-
-            long long ways = factorial[totalItems];
-
-            ways = ways * inverseFactorial[totalA] % MOD;
-            ways = ways * inverseFactorial[totalB] % MOD;
-
-            answer = (answer + ways) % MOD;
+    for (int i = 0; i < MAX_DIM; ++i) {
+        for (int j = 0; j < MAX_DIM; ++j) {
+            if (i > 0) gridPaths[i][j] = (gridPaths[i][j] + gridPaths[i - 1][j]) % MOD;
+            if (j > 0) gridPaths[i][j] = (gridPaths[i][j] + gridPaths[i][j - 1]) % MOD;
         }
     }
 
-    cout << answer << '\n';
-}
+    long long allPairsSum = 0;
+    for (int i = 0; i < totalBoxes; ++i) {
+        allPairsSum = (allPairsSum + gridPaths[OFFSET + boxes[i].first][OFFSET + boxes[i].second]) % MOD;
+    }
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+    int maxItems = 0;
+    for (int i = 0; i < totalBoxes; ++i) {
+        maxItems = max(maxItems, 2 * (boxes[i].first + boxes[i].second));
+    }
 
-    read_my_input();
-    optimize_memory();
+    vector<long long> factorial(maxItems + 5, 1);
+    for (int i = 1; i <= maxItems; ++i) {
+        factorial[i] = (factorial[i - 1] * i) % MOD;
+    }
+
+    auto combination = [&](int n, int r) -> long long {
+        if (r < 0 || r > n) return 0;
+        long long numerator = factorial[n];
+        long long denominator = (factorial[r] * factorial[n - r]) % MOD;
+        return (numerator * modPower(denominator, MOD - 2)) % MOD;
+    };
+
+    long long selfPairs = 0;
+    for (int i = 0; i < totalBoxes; ++i) {
+        selfPairs = (selfPairs + combination(2 * boxes[i].first + 2 * boxes[i].second, 2 * boxes[i].first)) % MOD;
+    }
+
+    long long answer = (allPairsSum - selfPairs + MOD) % MOD;
+    answer = (answer * modPower(2, MOD - 2)) % MOD;
+
+    cout << answer << "\n";
 
     return 0;
+}
+
+void read_my_input() {
+}
+
+void optimize_memory() {
 }
