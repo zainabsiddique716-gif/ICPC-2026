@@ -2,7 +2,6 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-// Initialize variables
 using namespace std;
 
 const long long INF = (1LL << 60);
