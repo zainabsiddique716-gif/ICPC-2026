@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <queue>
 #include <climits>
@@ -10,15 +11,20 @@ struct TreeNode {
     TreeNode* leftChild;
     TreeNode* rightChild;
 
-    TreeNode(int val) : value(val), leftChild(nullptr), rightChild(nullptr) {}
+    TreeNode(int val) {
+        value = val;
+        leftChild = nullptr;
+        rightChild = nullptr;
+    }
 };
 
 TreeNode* createTreeFromArray(const int inputList[], int totalElements) {
-    if (totalElements <= 0 || inputList[0] < 0) {
+    if (totalElements <= 0 || inputList[0] == -1) {
         return nullptr;
     }
 
     TreeNode* rootNode = new TreeNode(inputList[0]);
+
     queue<TreeNode*> nodeQueue;
     nodeQueue.push(rootNode);
 
@@ -29,18 +35,20 @@ TreeNode* createTreeFromArray(const int inputList[], int totalElements) {
         nodeQueue.pop();
 
         if (index < totalElements) {
-            if (inputList[index] >= 0) {
+            if (inputList[index] != -1) {
                 currentNode->leftChild = new TreeNode(inputList[index]);
                 nodeQueue.push(currentNode->leftChild);
             }
+
             index++;
         }
 
         if (index < totalElements) {
-            if (inputList[index] >= 0) {
+            if (inputList[index] != -1) {
                 currentNode->rightChild = new TreeNode(inputList[index]);
                 nodeQueue.push(currentNode->rightChild);
             }
+
             index++;
         }
     }
@@ -62,54 +70,88 @@ SubtreeData checkAndCalculateBST(TreeNode* currentNode) {
         return { true, LLONG_MAX, LLONG_MIN, 0LL };
     }
 
-    SubtreeData leftSubtree = checkAndCalculateBST(currentNode->leftChild);
-    SubtreeData rightSubtree = checkAndCalculateBST(currentNode->rightChild);
+    SubtreeData leftSubtree =
+        checkAndCalculateBST(currentNode->leftChild);
 
-    long long currentSubtreeSum = leftSubtree.totalSum + rightSubtree.totalSum + currentNode->value;
+    SubtreeData rightSubtree =
+        checkAndCalculateBST(currentNode->rightChild);
 
     if (leftSubtree.isBST && rightSubtree.isBST &&
         leftSubtree.maximumValue < currentNode->value &&
         currentNode->value < rightSubtree.minimumValue) {
 
+        long long currentSubtreeSum =
+            leftSubtree.totalSum +
+            rightSubtree.totalSum +
+            currentNode->value;
+
         maxBSTSum = max(maxBSTSum, currentSubtreeSum);
 
-        long long currentMin = min((long long)currentNode->value, leftSubtree.minimumValue);
-        long long currentMax = max((long long)currentNode->value, rightSubtree.maximumValue);
+        long long currentMin =
+            min((long long)currentNode->value,
+                leftSubtree.minimumValue);
 
-        return { true, currentMin, currentMax, currentSubtreeSum };
+        long long currentMax =
+            max((long long)currentNode->value,
+                rightSubtree.maximumValue);
+
+        return {
+            true,
+            currentMin,
+            currentMax,
+            currentSubtreeSum
+        };
     }
 
     return { false, 0, 0, 0 };
 }
 
+void deleteTree(TreeNode* currentNode) {
+    if (currentNode == nullptr) {
+        return;
+    }
+
+    deleteTree(currentNode->leftChild);
+    deleteTree(currentNode->rightChild);
+
+    delete currentNode;
+}
+
 int main() {
     int totalNodes;
+
     cout << "Enter the total number of elements: ";
+
     if (!(cin >> totalNodes) || totalNodes <= 0) {
-        cout << "Maximum Sum BST: 0\n";
+        cout << "Maximum Sum BST: 0" << endl;
         return 0;
     }
 
     int* inputValues = new int[totalNodes];
 
-    cout << "Enter " << totalNodes << " values (use -1 for NULL nodes): ";
+    cout << "Enter " << totalNodes
+        << " values (use -1 for NULL nodes): ";
+
     for (int i = 0; i < totalNodes; i++) {
         cin >> inputValues[i];
     }
 
-    TreeNode* rootNode = createTreeFromArray(inputValues, totalNodes);
+    TreeNode* rootNode =
+        createTreeFromArray(inputValues, totalNodes);
 
     if (rootNode == nullptr) {
-        cout << "Tree is empty.\n";
-        cout << "Maximum Sum BST: 0\n";
+        cout << "Tree is empty." << endl;
+        cout << "Maximum Sum BST: 0" << endl;
+
         delete[] inputValues;
         return 0;
     }
 
     checkAndCalculateBST(rootNode);
 
-    cout << "Maximum Sum BST: " << maxBSTSum << "\n";
+    cout << "Maximum Sum BST: " << maxBSTSum << endl;
 
+    deleteTree(rootNode);
     delete[] inputValues;
 
     return 0;
