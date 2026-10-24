@@ -1,11 +1,9 @@
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <bitset>
 
 using namespace std;
-
-const int MAX_NODES = 505;
 
 struct Event {
     int fromNode;
@@ -13,95 +11,110 @@ struct Event {
     long long timestamp;
 };
 
-bool compareEvents(const Event& eventA, const Event& eventB) {
-    if (eventA.timestamp != eventB.timestamp) {
-        return eventA.timestamp < eventB.timestamp;
-    }
-    if (eventA.fromNode != eventB.fromNode) {
-        return eventA.fromNode < eventB.fromNode;
-    }
-    return eventA.toNode < eventB.toNode;
+bool compareEvents(const Event& firstEvent, const Event& secondEvent) {
+    return firstEvent.timestamp < secondEvent.timestamp;
 }
 
-int main() {
-    int totalNodes, totalEvents;
-    long long maxTimeDifference;
+void read_my_input() {
+    int totalFriends, totalEvents;
+    long long maxTimeWindow;
 
-    cout << "Enter total nodes, total events, and max time difference: ";
-    if (!(cin >> totalNodes >> totalEvents >> maxTimeDifference)) {
-        return 0;
-    }
+    cin >> totalFriends >> totalEvents >> maxTimeWindow;
 
-    if (totalEvents < 3) {
-        cout << "Result: 0 0 0" << endl;
-        return 0;
-    }
+    vector<Event> events(totalEvents);
 
-    vector<Event> eventList(totalEvents);
-
-    cout << "Enter each event (fromNode toNode timestamp):" << endl;
     for (int i = 0; i < totalEvents; i++) {
-        cin >> eventList[i].fromNode >> eventList[i].toNode >> eventList[i].timestamp;
+        cin >> events[i].fromNode
+            >> events[i].toNode
+            >> events[i].timestamp;
     }
 
-    sort(eventList.begin(), eventList.end(), compareEvents);
+    sort(events.begin(), events.end(), compareEvents);
+
+    vector<vector<long long>> edgeTimes(
+        totalFriends * totalFriends
+    );
+
+    for (int i = 0; i < totalEvents; i++) {
+        int edgeIndex =
+            events[i].fromNode * totalFriends + events[i].toNode;
+
+        edgeTimes[edgeIndex].push_back(events[i].timestamp);
+    }
 
     long long countType1 = 0;
     long long countType2 = 0;
     long long countType3 = 0;
 
-    for (int i = 0; i < totalEvents; i++) {
-        int nodeA = eventList[i].fromNode;
-        int nodeB = eventList[i].toNode;
-        long long time1 = eventList[i].timestamp;
+    for (int first = 0; first < totalEvents; first++) {
+        int A = events[first].fromNode;
+        int B = events[first].toNode;
 
-        if (nodeA == nodeB) continue;
+        long long firstTime = events[first].timestamp;
+        long long lastAllowedTime = firstTime + maxTimeWindow;
 
-        for (int j = i + 1; j < totalEvents; j++) {
-            long long time2 = eventList[j].timestamp;
+        for (int second = first + 1; second < totalEvents; second++) {
+            long long secondTime = events[second].timestamp;
 
-            if (time2 - time1 > maxTimeDifference) break;
-            if (time2 == time1) continue;
-
-            int nodeU2 = eventList[j].fromNode;
-            int nodeV2 = eventList[j].toNode;
-
-            int targetU3 = -1;
-            int targetV3 = -1;
-            int patternType = 0;
-
-            if (nodeU2 == nodeB && nodeV2 != nodeA && nodeV2 != nodeB) {
-                targetU3 = nodeV2;
-                targetV3 = nodeA;
-                patternType = 1;
-            } else if (nodeU2 == nodeA && nodeV2 != nodeA && nodeV2 != nodeB) {
-                targetU3 = nodeB;
-                targetV3 = nodeV2;
-                patternType = 2;
-            } else if (nodeV2 == nodeB && nodeU2 != nodeA && nodeU2 != nodeB) {
-                targetU3 = nodeB;
-                targetV3 = nodeA;
-                patternType = 3;
+            if (secondTime >= lastAllowedTime) {
+                if (secondTime > lastAllowedTime) {
+                    break;
+                }
             }
 
-            if (patternType == 0) continue;
+            if (secondTime <= firstTime) {
+                continue;
+            }
 
-            for (int k = j + 1; k < totalEvents; k++) {
-                long long time3 = eventList[k].timestamp;
+            int C = events[second].fromNode;
+            int D = events[second].toNode;
 
-                if (time3 - time1 > maxTimeDifference) break;
-                if (time3 == time2) continue;
+            if (A == B || C == D) {
+                continue;
+            }
 
-                if (eventList[k].fromNode == targetU3 && eventList[k].toNode == targetV3) {
-                    if (patternType == 1) countType1++;
-                    else if (patternType == 2) countType2++;
-                    else if (patternType == 3) countType3++;
-                }
+            if (C == B && D != A && D != B) {
+                int edgeIndex = D * totalFriends + A;
+                const vector<long long>& times = edgeTimes[edgeIndex];
+
+                auto begin = upper_bound(times.begin(), times.end(), secondTime);
+                auto end = upper_bound(times.begin(), times.end(), lastAllowedTime);
+
+                countType1 += end - begin;
+            }
+
+            if (C == A && D != A && D != B) {
+                int edgeIndex = B * totalFriends + D;
+                const vector<long long>& times = edgeTimes[edgeIndex];
+
+                auto begin = upper_bound(times.begin(), times.end(), secondTime);
+                auto end = upper_bound(times.begin(), times.end(), lastAllowedTime);
+
+                countType2 += end - begin;
+            }
+
+            if (D == B && C != A && C != B) {
+                int edgeIndex = B * totalFriends + A;
+                const vector<long long>& times = edgeTimes[edgeIndex];
+
+                auto begin = upper_bound(times.begin(), times.end(), secondTime);
+                auto end = upper_bound(times.begin(), times.end(), lastAllowedTime);
+
+                countType3 += end - begin;
             }
         }
     }
 
-    cout << "Result: " << countType1 << " " << countType2 << " " << countType3 << endl;
+    cout << countType1 << " "
+         << countType2 << " "
+         << countType3 << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    read_my_input();
 
     return 0;
 }
