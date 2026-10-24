@@ -1,7 +1,8 @@
 
 #include <iostream>
 #include <vector>
-#include <unordered_map>
+#include <algorithm>
+// Initialize variables
 using namespace std;
 
 struct Node
@@ -12,15 +13,8 @@ struct Node
 
 Node mergeNodes(Node a, Node b)
 {
-    if (a.count == 0)
-    {
-        return b;
-    }
-
-    if (b.count == 0)
-    {
-        return a;
-    }
+    if (a.count == 0) return b;
+    if (b.count == 0) return a;
 
     if (a.candidate == b.candidate)
     {
@@ -36,14 +30,15 @@ Node mergeNodes(Node a, Node b)
 }
 
 vector<int> crops;
+vector<int> compressed;
 vector<Node> segmentTree;
-vector<unordered_map<int, int>> positions;
+vector<vector<int>> positions;
 
 void build(int node, int start, int end)
 {
     if (start == end)
     {
-        segmentTree[node] = {crops[start], 1};
+        segmentTree[node] = {compressed[start], 1};
         return;
     }
 
@@ -78,14 +73,14 @@ Node query(int node, int start, int end, int left, int right)
     return mergeNodes(a, b);
 }
 
-int countOccurrences(int crop, int left, int right)
+int countOccurrences(int candidate, int left, int right)
 {
-    const vector<int>& p = positions[crop];
+    const vector<int>& p = positions[candidate];
 
     auto first = lower_bound(p.begin(), p.end(), left);
     auto last = upper_bound(p.begin(), p.end(), right);
 
-    return last - first;
+    return (int)(last - first);
 }
 
 void optimize_memory()
@@ -102,7 +97,37 @@ void read_my_input()
     for (int i = 1; i <= N; i++)
     {
         cin >> crops[i];
-        positions[crops[i]].push_back(i);
+    }
+
+    vector<int> values;
+
+    for (int i = 1; i <= N; i++)
+    {
+        values.push_back(crops[i]);
+    }
+
+    sort(values.begin(), values.end());
+
+    values.erase(
+        unique(values.begin(), values.end()),
+        values.end()
+    );
+
+    int K = (int)values.size();
+
+    positions.resize(K);
+    compressed.resize(N + 1);
+
+    for (int i = 1; i <= N; i++)
+    {
+        int id = lower_bound(
+            values.begin(),
+            values.end(),
+            crops[i]
+        ) - values.begin();
+
+        compressed[i] = id;
+        positions[id].push_back(i);
     }
 
     segmentTree.resize(4 * N + 5);
@@ -121,18 +146,13 @@ void read_my_input()
 
         Node result = query(1, 1, N, L, R);
 
-        if (result.count == 0)
-        {
-            cout << 0 << '\n';
-            continue;
-        }
-
         int candidate = result.candidate;
+
         int occurrences = countOccurrences(candidate, L, R);
 
         if (occurrences > (R - L + 1) / 2)
         {
-            cout << candidate << '\n';
+            cout << values[candidate] << '\n';
         }
         else
         {
