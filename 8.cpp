@@ -2,6 +2,7 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
+// Initialize variables
 
 using namespace std;
 
@@ -13,6 +14,9 @@ struct Edge {
 };
 
 void optimize_memory() {
+}
+
+void read_my_input() {
 }
 
 int main() {
