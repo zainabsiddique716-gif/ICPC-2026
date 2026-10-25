@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -9,7 +8,7 @@ typedef long long ll;
 const ll INF = LLONG_MAX / 4;
 
 static bool halfok(long long w, long long C) {
-    return w >= C / 2;
+    return 2 * w >= C;   
 }
 
 int main() {
@@ -28,14 +27,12 @@ int main() {
     }
 
     vector<ll> pref(n + 1, 0);
-
     for (int i = 0; i < n; i++) {
         pref[i + 1] = pref[i] + a[i];
     }
 
     vector<ll> dp0(n + 1, INF);
     vector<ll> dp1(n + 1, INF);
-
     dp0[0] = 0;
 
     for (int j = 1; j <= n; j++) {
@@ -46,31 +43,18 @@ int main() {
             ll bestE = INF;
 
             if (S <= Cc) {
-                if (halfok(S, Cc)) {
-                    bestN = min(bestN, Pc);
-                }
-                else {
-                    bestE = min(bestE, Pc);
-                }
+                if (halfok(S, Cc)) bestN = min(bestN, Pc);
+                else bestE = min(bestE, Pc);
             }
 
             if (S <= Cv) {
-                if (halfok(S, Cv)) {
-                    bestN = min(bestN, Pv);
-                }
-                else {
-                    bestE = min(bestE, Pv);
-                }
+                if (halfok(S, Cv)) bestN = min(bestN, Pv);
+                else bestE = min(bestE, Pv);
             }
 
             if (bestN < INF) {
-                if (dp0[i] < INF) {
-                    dp0[j] = min(dp0[j], dp0[i] + bestN);
-                }
-
-                if (dp1[i] < INF) {
-                    dp1[j] = min(dp1[j], dp1[i] + bestN);
-                }
+                if (dp0[i] < INF) dp0[j] = min(dp0[j], dp0[i] + bestN);
+                if (dp1[i] < INF) dp1[j] = min(dp1[j], dp1[i] + bestN);
             }
 
             if (bestE < INF && dp0[i] < INF) {
@@ -80,13 +64,8 @@ int main() {
     }
 
     ll ans = min(dp0[n], dp1[n]);
-
-    if (ans >= INF) {
-        cout << -1 << '\n';
-    }
-    else {
-        cout << ans << '\n';
-    }
+    if (ans >= INF) cout << -1 << '\n';
+    else cout << ans << '\n';
 
     return 0;
 }
