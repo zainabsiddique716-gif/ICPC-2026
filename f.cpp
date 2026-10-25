@@ -1,10 +1,13 @@
+
 #include <iostream>
 #include <vector>
 #include <queue>
 #include <string>
+#include <algorithm>
 using namespace std;
 
 const int LIMIT = 6776;
+const int HALF = LIMIT / 2;
 
 int main() {
     ios::sync_with_stdio(false);
@@ -13,7 +16,7 @@ int main() {
     int N, M, Q;
     cin >> N >> M >> Q;
 
-    vector<vector<int>> adj(N + 1);
+    vector<vector<int> > adj(N + 1);
 
     for (int i = 0; i < M; i++) {
         int u, v;
@@ -22,57 +25,79 @@ int main() {
         adj[v].push_back(u);
     }
 
-    vector<pair<int, int>> queries(Q);
-    vector<vector<int>> queriesBySource(N + 1);
+    vector<int> ds(N + 1, -1), dt(N + 1, -1);
+    string ans;
+    ans.reserve(Q);
 
-    for (int i = 0; i < Q; i++) {
-        int u, v;
-        cin >> u >> v;
-        queries[i] = { u, v };
-        queriesBySource[u].push_back(i);
-    }
+    vector<int> qs, qt;
+    qs.reserve(N);
+    qt.reserve(N);
 
-    string ans(Q, '0');
-    vector<int> dist(N + 1);
-    vector<int> seen(N + 1, 0);
-    int stamp = 0;
+    for (int qi = 0; qi < Q; qi++) {
+        int s, t;
+        cin >> s >> t;
 
-    for (int s = 1; s <= N; s++) {
-        if (queriesBySource[s].empty())
+        if (s == t) {
+            ans += '1';
             continue;
+        }
 
-        ++stamp;
-        queue<int> q;
-        q.push(s);
-        seen[s] = stamp;
-        dist[s] = 0;
+        fill(ds.begin(), ds.end(), -1);
+        fill(dt.begin(), dt.end(), -1);
 
-        while (!q.empty()) {
-            int u = q.front();
-            q.pop();
+        queue<int> qS, qT;
 
-            if (dist[u] == LIMIT)
-                continue;
+        ds[s] = 0;
+        dt[t] = 0;
+        qS.push(s);
+        qT.push(t);
 
-            for (int v : adj[u]) {
-                if (seen[v] == stamp)
+        bool found = false;
+
+        while (!qS.empty() && !qT.empty() && !found) {
+            // Expand one complete layer from the
+            // smaller frontier.
+            bool fromS = qS.size() <= qT.size();
+            queue<int>& q = fromS ? qS : qT;
+            vector<int>& own = fromS ? ds : dt;
+            vector<int>& other = fromS ? dt : ds;
+
+            int layerSize = (int)q.size();
+
+            while (layerSize-- > 0 && !found) {
+                int u = q.front();
+                q.pop();
+
+                if (own[u] >= HALF)
                     continue;
 
-                seen[v] = stamp;
-                dist[v] = dist[u] + 1;
-                q.push(v);
+                for (int v : adj[u]) {
+                    // Check the other search BEFORE
+                    // skipping an already visited node.
+                    if (other[v] != -1 &&
+                        own[u] + 1 + other[v] <= LIMIT) {
+                        found = true;
+                        break;
+                    }
+
+                    if (own[v] == -1) {
+                        own[v] = own[u] + 1;
+
+                        if (other[v] != -1 &&
+                            own[v] + other[v] <= LIMIT) {
+                            found = true;
+                            break;
+                        }
+
+                        q.push(v);
+                    }
+                }
             }
         }
 
-        for (int id : queriesBySource[s]) {
-            int v = queries[id].second;
-
-            if (seen[v] == stamp && dist[v] <= LIMIT)
-                ans[id] = '1';
-        }
+        ans += (found ? '1' : '0');
     }
 
     cout << ans << '\n';
-
     return 0;
 }
