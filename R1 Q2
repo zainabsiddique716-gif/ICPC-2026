@@ -1,0 +1,84 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+typedef long long ll;
+const int MOD = 1000000007;
+const int MAXN = 1000005;
+
+ll fact[MAXN], invfact[MAXN];
+
+ll pw(ll b, ll e) {
+    ll r = 1;
+    b %= MOD;
+    while (e) {
+        if (e & 1) r = r * b % MOD;
+        b = b * b % MOD;
+        e >>= 1;
+    }
+    return r;
+}
+
+ll C(int n, int k) {
+    if (k < 0 || k > n) return 0;
+    return fact[n] * invfact[k] % MOD * invfact[n - k] % MOD;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    fact[0] = 1;
+    for (int i = 1; i < MAXN; i++) fact[i] = fact[i - 1] * i % MOD;
+    invfact[MAXN - 1] = pw(fact[MAXN - 1], MOD - 2);
+    for (int i = MAXN - 2; i >= 0; i--) invfact[i] = invfact[i + 1] * (i + 1) % MOD;
+
+    int q;
+    cin >> q;
+
+    unordered_map<ll, ll> memo;
+    memo.reserve((size_t)q * 2);
+
+    vector<ll> out(q);
+
+    for (int t = 0; t < q; t++) {
+        int n, f;
+        cin >> n >> f;
+
+        int Jmax = (n - 1) / 2;
+        int fc = min(f, Jmax);
+
+        ll key = (ll)n * 1000001LL + fc;
+        auto it = memo.find(key);
+        if (it != memo.end()) {
+            out[t] = it->second;
+            continue;
+        }
+
+        ll ans = 0;
+
+        if (fc + 1 <= Jmax - fc + 1) {
+            for (int j = 0; j <= fc; j++) {
+                ans = (ans + C(n, 2 * j + 1)) % MOD;
+            }
+        }
+        else {
+            ll full = pw(2, n - 1);
+            ll sub = 0;
+            for (int j = fc + 1; j <= Jmax; j++) {
+                sub = (sub + C(n, 2 * j + 1)) % MOD;
+            }
+            ans = ((full - sub) % MOD + MOD) % MOD;
+        }
+
+        memo[key] = ans;
+        out[t] = ans;
+    }
+
+    for (int t = 0; t < q; t++) {
+        cout << out[t] << "\n";
+    }
+
+    return 0;
+}
