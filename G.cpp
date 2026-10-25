@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -7,16 +8,20 @@ using ll = long long;
 
 int digits(ll p) {
     int d = 0;
+
     while (p > 0) {
         d++;
         p /= 10;
     }
+
     return d;
 }
 
 bool cmp(ll a, ll b) {
-    return (ll)digits(a) * a * (b - 1)
-        < (ll)digits(b) * b * (a - 1);
+    ll left = 1LL * digits(a) * a * (b - 1);
+    ll right = 1LL * digits(b) * b * (a - 1);
+
+    return left < right;
 }
 
 int main() {
@@ -30,6 +35,11 @@ int main() {
         ll M;
         cin >> M;
 
+        if (M == 1) {
+            cout << 0 << '\n';
+            continue;
+        }
+
         ll n = M;
         vector<ll> factors;
 
@@ -40,8 +50,9 @@ int main() {
             }
         }
 
-        if (n > 1)
+        if (n > 1) {
             factors.push_back(n);
+        }
 
         sort(factors.begin(), factors.end(), cmp);
 
